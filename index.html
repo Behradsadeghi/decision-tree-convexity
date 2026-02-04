@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convexity Magic in Decision Trees</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            margin: 0;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 30px 0;
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .controls {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .control-group {
+            background: #f0f0f0;
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+        .control-group label {
+            font-weight: bold;
+            color: #333;
+        }
+        input[type="range"] {
+            width: 200px;
+            cursor: pointer;
+        }
+        .value-display {
+            font-size: 1.2em;
+            color: #667eea;
+            font-weight: bold;
+        }
+        .info-box {
+            background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        .info-box h3 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .gain-display {
+            text-align: center;
+            font-size: 1.8em;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+        .coordinates-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .coord-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        .coord-box h4 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .coord-value {
+            font-size: 1.1em;
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+        .tab {
+            padding: 12px 30px;
+            background: #e0e0e0;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .explanation {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Convexity Magic in Decision Trees</h1>
+        <p class="subtitle">Why Gini and Entropy work but Min doesn't?</p>
+
+        <div class="tabs">
+            <button class="tab active" onclick="changeFunction('gini')">Gini Index</button>
+            <button class="tab" onclick="changeFunction('entropy')">Entropy</button>
+            <button class="tab" onclick="changeFunction('min')">Min (Flat Line)</button>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Parent Point (p)</label>
+                <input type="range" id="pSlider" min="0" max="100" value="50" oninput="updateChart()">
+                <span class="value-display" id="pValue">0.50</span>
+            </div>
+            <div class="control-group">
+                <label>Left Child (q)</label>
+                <input type="range" id="qSlider" min="0" max="100" value="30" oninput="updateChart()">
+                <span class="value-display" id="qValue">0.30</span>
+            </div>
+            <div class="control-group">
+                <label>Right Child (r)</label>
+                <input type="range" id="rSlider" min="0" max="100" value="70" oninput="updateChart()">
+                <span class="value-display" id="rValue">0.70</span>
+            </div>
+            <div class="control-group">
+                <label>Left Weight (alpha)</label>
+                <input type="range" id="alphaSlider" min="0" max="100" value="50" oninput="updateChart()">
+                <span class="value-display" id="alphaValue">0.50</span>
+            </div>
+        </div>
+
+        <div class="chart-container">
+            <canvas id="myChart"></canvas>
+        </div>
+
+        <div class="gain-display" id="gainDisplay">
+            Information Gain = 0.0000
+        </div>
+
+        <div class="coordinates-display">
+            <div class="coord-box">
+                <h4>Parent Point (Red)</h4>
+                <div class="coord-value" id="coordParent">(0.5000, 0.5000)</div>
+            </div>
+            <div class="coord-box">
+                <h4>Left Child (Green)</h4>
+                <div class="coord-value" id="coordLeft">(0.3000, 0.4200)</div>
+            </div>
+            <div class="coord-box">
+                <h4>Right Child (Green)</h4>
+                <div class="coord-value" id="coordRight">(0.7000, 0.4200)</div>
+            </div>
+            <div class="coord-box">
+                <h4>Weighted Average (Orange)</h4>
+                <div class="coord-value" id="coordAvg">(0.5000, 0.4200)</div>
+            </div>
+        </div>
+
+        <div class="info-box" id="explanation">
+            <h3>Explanation:</h3>
+            <p id="explanationText"></p>
+        </div>
+
+        <div class="explanation">
+            <strong>Key Points:</strong>
+            <ul>
+                <li><strong>Blue curve:</strong> Impurity function (Gini, Entropy, or Min)</li>
+                <li><strong>Red point:</strong> Parent node impurity</li>
+                <li><strong>Green points:</strong> Two child nodes impurity</li>
+                <li><strong>Yellow line:</strong> Line connecting the children (chord)</li>
+                <li><strong>Orange triangle:</strong> Weighted average of children (on the yellow line)</li>
+                <li><strong>Red vertical line:</strong> Information Gain (distance from chord to curve)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        let currentFunction = 'gini';
+        let chart;
+
+        function gini(p) {
+            return 2 * p * (1 - p);
+        }
+
+        function entropy(p) {
+            if (p === 0 || p === 1) return 0;
+            return -p * Math.log2(p) - (1 - p) * Math.log2(1 - p);
+        }
+
+        function min(p) {
+            return Math.min(p, 1 - p);
+        }
+
+        function getFunction(name) {
+            switch(name) {
+                case 'gini': return gini;
+                case 'entropy': return entropy;
+                case 'min': return min;
+            }
+        }
+
+        function changeFunction(name) {
+            currentFunction = name;
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            updateChart();
+        }
+
+        function updateChart() {
+            const p = parseFloat(document.getElementById('pSlider').value) / 100;
+            const q = parseFloat(document.getElementById('qSlider').value) / 100;
+            const r = parseFloat(document.getElementById('rSlider').value) / 100;
+            const alpha = parseFloat(document.getElementById('alphaSlider').value) / 100;
+
+            document.getElementById('pValue').textContent = p.toFixed(2);
+            document.getElementById('qValue').textContent = q.toFixed(2);
+            document.getElementById('rValue').textContent = r.toFixed(2);
+            document.getElementById('alphaValue').textContent = alpha.toFixed(2);
+
+            const func = getFunction(currentFunction);
+            
+            // Generate curve data
+            const curveData = [];
+            for (let x = 0; x <= 1; x += 0.01) {
+                curveData.push({x: x, y: func(x)});
+            }
+
+            // Calculate impurities
+            const impurity_p = func(p);
+            const impurity_q = func(q);
+            const impurity_r = func(r);
+            const weighted_avg_y = alpha * impurity_q + (1 - alpha) * impurity_r;
+            const weighted_avg_x = alpha * q + (1 - alpha) * r;
+            const gain = func(weighted_avg_x) - weighted_avg_y;
+
+            // Update gain display
+            document.getElementById('gainDisplay').innerHTML = 
+                `Information Gain = ${gain.toFixed(4)}<br><small style="font-size: 0.6em;">= y_parent - y_weighted_avg = ${func(weighted_avg_x).toFixed(4)} - ${weighted_avg_y.toFixed(4)}</small>`;
+            document.getElementById('gainDisplay').style.background = 
+                gain > 0.01 ? 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)' : 
+                gain < -0.01 ? 'linear-gradient(135deg, #eb3349 0%, #f45c43 100%)' :
+                'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+
+            // Update coordinates display
+            document.getElementById('coordParent').textContent = `(${p.toFixed(4)}, ${impurity_p.toFixed(4)})`;
+            document.getElementById('coordLeft').textContent = `(${q.toFixed(4)}, ${impurity_q.toFixed(4)})`;
+            document.getElementById('coordRight').textContent = `(${r.toFixed(4)}, ${impurity_r.toFixed(4)})`;
+            document.getElementById('coordAvg').textContent = `(${weighted_avg_x.toFixed(4)}, ${weighted_avg_y.toFixed(4)})`;
+
+            // Update explanation
+            updateExplanation(gain);
+
+            // Update chart
+            if (chart) {
+                chart.destroy();
+            }
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Impurity Curve',
+                            data: curveData,
+                            showLine: true,
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.1)',
+                            pointRadius: 0,
+                            borderWidth: 3,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Parent Node',
+                            data: [{x: p, y: impurity_p}],
+                            backgroundColor: 'rgb(255, 99, 132)',
+                            pointRadius: 10,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: 'Left Child',
+                            data: [{x: q, y: impurity_q}],
+                            backgroundColor: 'rgb(75, 192, 75)',
+                            pointRadius: 8,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: 'Right Child',
+                            data: [{x: r, y: impurity_r}],
+                            backgroundColor: 'rgb(75, 192, 75)',
+                            pointRadius: 8,
+                            pointStyle: 'circle'
+                        },
+                        {
+                            label: 'Chord (connecting children)',
+                            data: [{x: q, y: impurity_q}, {x: r, y: impurity_r}],
+                            showLine: true,
+                            borderColor: 'rgb(255, 205, 86)',
+                            borderWidth: 3,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        },
+                        {
+                            label: 'Weighted Average',
+                            data: [{x: weighted_avg_x, y: weighted_avg_y}],
+                            backgroundColor: 'rgb(255, 159, 64)',
+                            pointRadius: 10,
+                            pointStyle: 'triangle'
+                        },
+                        {
+                            label: 'Gain Distance',
+                            data: [{x: weighted_avg_x, y: weighted_avg_y}, {x: weighted_avg_x, y: func(weighted_avg_x)}],
+                            showLine: true,
+                            borderColor: 'rgba(255, 99, 132, 0.8)',
+                            borderWidth: 4,
+                            pointRadius: 0,
+                            borderDash: [10, 5]
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 12 },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: (${context.parsed.x.toFixed(3)}, ${context.parsed.y.toFixed(3)})`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: 0,
+                            max: 1,
+                            title: {
+                                display: true,
+                                text: 'Class Ratio (p)',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: Math.max(1, ...curveData.map(d => d.y)) * 1.1,
+                            title: {
+                                display: true,
+                                text: 'Impurity Value',
+                                font: { size: 14, weight: 'bold' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateExplanation(gain) {
+            let text = '';
+            if (currentFunction === 'gini') {
+                text = `<strong>Gini Index (Concave):</strong> Due to the curve's concavity, the weighted average point (orange triangle) lies on the yellow chord, but the blue curve is ABOVE it. This vertical distance (red line) = Information Gain = ${gain.toFixed(4)}<br><br>
+                Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+            } else if (currentFunction === 'entropy') {
+                text = `<strong>Entropy (Concave):</strong> Similar to Gini, the orange point is on the yellow chord but the blue curve is above. Vertical distance = Gain = ${gain.toFixed(4)}<br><br>
+                Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+            } else {
+                text = `<strong>Min (Piecewise Linear):</strong> Since Min is made of straight lines, the orange point is on the yellow chord AND the blue curve is EXACTLY at the same place. Distance = zero → No Gain! ${gain.toFixed(4)}<br><br>
+                The yellow chord and blue curve coincide!`;
+            }
+            document.getElementById('explanationText').innerHTML = text;
+        }
+
+        // Initialize
+        updateChart();
+    </script>
+</body>
+</html>
