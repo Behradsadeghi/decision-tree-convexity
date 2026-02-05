@@ -6,6 +6,12 @@ An interactive web-based visualization tool that demonstrates why **Gini Index**
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![GitHub Pages](https://img.shields.io/badge/hosted-GitHub%20Pages-blue)](https://pages.github.com/)
 
+## 🚀 Live Demo
+
+### **[👉 Try it now! 👈](https://behradsadeghi.github.io/decision-tree-convexity/)**
+
+Experience the interactive visualization at: `https://behradsadeghi.github.io/decision-tree-convexity/`
+
 ## 🎯 What Does This Visualize?
 
 This tool provides an intuitive understanding of a fundamental concept in machine learning: **why concave impurity functions generate positive information gain in decision trees**.
@@ -28,21 +34,30 @@ But here's the catch: **not all impurity functions work!**
 
 This visualization shows **geometrically** why concave functions create the "gap" needed for information gain.
 
-## 🚀 Live Demo
-
-### **[👉 Try it now! 👈](https://behradsadeghi.github.io/decision-tree-convexity/)**
-
-Experience the interactive visualization at: `https://behradsadeghi.github.io/decision-tree-convexity/`
-
 ## ✨ Features
 
-- 🎚️ **Interactive Controls**: Adjust parent and children impurity values with real-time updates
-- 📊 **Three Impurity Functions**: Switch between Gini, Entropy, and Min to see the difference
-- 📐 **Geometric Visualization**: See the chord connecting children points and the curve above it
-- 🔢 **Precise Calculations**: All coordinates and information gain shown to 4 decimal places
-- 📱 **Responsive Design**: Works perfectly on desktop, tablet, and mobile
-- 🎨 **Beautiful UI**: Modern gradient design with smooth animations
-- 🧮 **Mathematical Accuracy**: Implements exact formulas for all impurity functions
+### 🎓 Two Interactive Modes
+
+#### Educational Mode (Recommended for Learning)
+- **Realistic Decision Tree Simulation**: Enforces the constraint `p = α × q + (1-α) × r`
+- The parent point is automatically calculated based on children and split ratio
+- Shows how real decision tree splits work
+- Perfect for understanding the mathematics behind CART algorithms
+
+#### Free Mode (Exploratory)
+- All parameters are independent
+- Experiment with any combination of values
+- See what happens when the constraint is violated
+- Great for building geometric intuition
+
+### 🎨 Visual Elements
+
+- 🎚️ **Interactive Controls**: Real-time sliders for all parameters
+- 📊 **Three Impurity Functions**: Switch between Gini, Entropy, and Min
+- 📐 **Geometric Visualization**: Clear display of curves, chords, and gaps
+- 🔢 **Precise Calculations**: All coordinates shown to 4 decimal places
+- 📱 **Responsive Design**: Works on desktop, tablet, and mobile
+- 🧮 **Mathematical Accuracy**: Exact formulas for all impurity functions
 
 ## 🎓 Educational Value
 
@@ -79,20 +94,28 @@ Perfect for:
 
 ### Information Gain Calculation
 
+#### Educational Mode
 ```javascript
-// Weighted average of children (point on chord)
-x_avg = α * q + (1-α) * r
-y_avg = α * impurity(q) + (1-α) * impurity(r)
+// Given: q, r, α (user inputs)
+// Calculate: p = α × q + (1-α) × r (automatic)
+
+x_avg = α × q + (1-α) × r  // This equals p!
+y_avg = α × impurity(q) + (1-α) × impurity(r)
 
 // Information gain (vertical distance)
-Gain = f(x_avg) - y_avg
+Gain = impurity(p) - y_avg
 ```
 
-Where:
-- `q` = left child class ratio
-- `r` = right child class ratio
-- `α` = fraction of samples going left
-- `f()` = impurity function
+#### Free Mode
+```javascript
+// All independent: p, q, r, α (user inputs)
+
+x_avg = α × q + (1-α) × r  // May not equal p
+y_avg = α × impurity(q) + (1-α) × impurity(r)
+
+// Information gain (vertical distance at x_avg)
+Gain = f(x_avg) - y_avg
+```
 
 ## 📚 Understanding the Visualization
 
@@ -121,32 +144,69 @@ Where:
 
 ## 🎮 How to Use
 
-1. **Select an impurity function** using the tabs at the top
-2. **Adjust the sliders:**
-   - **Parent Point (p)**: The class ratio at the parent node
-   - **Left Child (q)**: Class ratio if split goes left
-   - **Right Child (r)**: Class ratio if split goes right
-   - **Left Weight (α)**: Fraction of samples going to left child
-3. **Observe the changes:**
-   - Watch the information gain update in real-time
-   - See coordinates with 4 decimal precision
-   - Notice how the vertical gap changes
+### Getting Started
+
+1. **Choose a mode:**
+   - 🎓 **Educational Mode**: Learn how real decision trees work
+   - 🎨 **Free Mode**: Explore and experiment freely
+
+2. **Select an impurity function** using the tabs:
+   - Gini Index
+   - Entropy
+   - Min (to see why it doesn't work)
+
+3. **Adjust the sliders:**
+   - **Educational Mode**: Adjust q, r, and α (p is calculated automatically)
+   - **Free Mode**: Adjust all four parameters independently
+
+4. **Observe:**
+   - Information Gain updates in real-time
+   - Coordinates displayed with 4 decimal precision
+   - Vertical gap shows the gain visually
 
 ### Recommended Experiments
 
-Try these configurations to build intuition:
+#### Experiment 1: Perfect Split (Educational Mode)
+```
+q = 0.0 (pure left)
+r = 1.0 (pure right)
+α = 0.5 (balanced split)
+→ p = 0.5 (calculated)
+→ Maximum information gain!
+```
 
-**Experiment 1: Pure Split**
-- p = 0.5, q = 0.0, r = 1.0, α = 0.5
-- Observe maximum information gain
+#### Experiment 2: No Information (Educational Mode)
+```
+q = 0.5
+r = 0.5 (same as parent)
+α = 0.5
+→ p = 0.5 (calculated)
+→ Zero information gain (no improvement)
+```
 
-**Experiment 2: No Information**
-- p = 0.5, q = 0.5, r = 0.5, α = 0.5
-- Observe zero information gain (no improvement)
+#### Experiment 3: Unbalanced Split (Educational Mode)
+```
+q = 0.2
+r = 0.8
+α = 0.3 (70% go right)
+→ p = 0.62 (calculated)
+→ See how weights affect gain
+```
 
-**Experiment 3: Unbalanced Split**
-- p = 0.5, q = 0.3, r = 0.7, α = 0.3
-- See how weights affect the gain
+#### Experiment 4: Why Min Fails (Educational Mode)
+- Set any values for q, r, α
+- Switch to Min function
+- Notice: Gain is always ~0 regardless of split!
+
+#### Experiment 5: Breaking the Constraint (Free Mode)
+```
+p = 0.9
+q = 0.2
+r = 0.8
+α = 0.5
+→ Orange triangle NOT under red parent
+→ See the geometric difference
+```
 
 ## 🚀 Deployment
 
@@ -160,11 +220,11 @@ Try these configurations to build intuition:
 
 ### Deploy to Netlify
 
-[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/yourusername/decision-tree-convexity)
+[![Deploy to Netlify](https://www.netlify.com/img/deploy/button.svg)](https://app.netlify.com/start/deploy?repository=https://github.com/behradsadeghi/decision-tree-convexity)
 
 ### Deploy to Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/yourusername/decision-tree-convexity)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/behradsadeghi/decision-tree-convexity)
 
 ### Local Development
 
@@ -193,11 +253,26 @@ f(αx₁ + (1-α)x₂) ≥ αf(x₁) + (1-α)f(x₂)
 
 This inequality is **Jensen's Inequality** for concave functions.
 
-In our case:
-- Left side = `f(x_avg)` = impurity at the weighted average point
-- Right side = `y_avg` = weighted average of impurities
+In the context of decision trees:
+- Left side: `f(x_avg)` = impurity at the weighted average point
+- Right side: `y_avg` = weighted average of impurities
 - The inequality guarantees: `f(x_avg) ≥ y_avg`
 - Therefore: **Information Gain = f(x_avg) - y_avg ≥ 0** ✅
+
+### The Decision Tree Constraint
+
+In a real decision tree split:
+- Parent has N samples with class ratio p
+- After split:
+  - `α × N` samples go left with class ratio q
+  - `(1-α) × N` samples go right with class ratio r
+
+This naturally enforces:
+```
+p = α × q + (1-α) × r
+```
+
+The **Educational Mode** simulates this constraint to show realistic splits.
 
 ### Why Linear Functions Don't Work
 
@@ -206,6 +281,8 @@ For piecewise linear functions like Min:
 - The chord connecting two points **lies on** the function itself
 - No gap exists between curve and chord
 - Information Gain = 0 (always!) ❌
+
+This is why Min (misclassification error) is not used as a splitting criterion in modern decision tree implementations.
 
 ## 🤝 Contributing
 
@@ -216,6 +293,7 @@ Contributions are welcome! Here are some ways you can help:
 - 📝 Improve documentation
 - 🎨 Enhance the UI/UX
 - 🌍 Add translations
+- 📚 Add more educational examples
 
 ### Development Setup
 
@@ -246,9 +324,19 @@ git push origin main
 - [Information Theory and Decision Trees](https://en.wikipedia.org/wiki/Decision_tree_learning)
 - [Understanding Gini Index and Entropy](https://towardsdatascience.com/)
 
-### Related Projects
-- [Interactive ML Visualizations](https://github.com/topics/machine-learning-visualization)
-- [Decision Tree Playground](https://github.com/topics/decision-tree)
+### Related Concepts
+- **Jensen's Inequality**: Foundation for understanding why concave functions work
+- **CART Algorithm**: Classification And Regression Trees
+- **ID3 & C4.5**: Early decision tree algorithms using entropy
+- **Information Theory**: Shannon entropy and mutual information
+
+## 🎯 Use Cases
+
+This visualization is being used by:
+- University courses on machine learning
+- Online ML tutorials and blog posts
+- Corporate training programs
+- Self-learners exploring decision trees
 
 ## 📄 License
 
@@ -259,6 +347,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the classic decision tree literature
 - Built with [Chart.js](https://www.chartjs.org/) for beautiful visualizations
 - Hosted on [GitHub Pages](https://pages.github.com/)
+- Special thanks to the ML education community
 
 ## 📧 Contact
 
@@ -266,15 +355,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - GitHub: [@behradsadeghi](https://github.com/behradsadeghi)
 - Project Link: [https://github.com/behradsadeghi/decision-tree-convexity](https://github.com/behradsadeghi/decision-tree-convexity)
+- Live Demo: [https://behradsadeghi.github.io/decision-tree-convexity/](https://behradsadeghi.github.io/decision-tree-convexity/)
+
+## ⭐ Star History
+
+If this project helped you understand decision trees better, please consider giving it a star!
 
 ---
 
 <div align="center">
 
-**If this helped you understand decision trees better, give it a ⭐!**
+**Made with ❤️ for the ML community**
 
-Made with ❤️ for the ML community
-
-[🌐 Live Demo](https://behradsadeghi.github.io/decision-tree-convexity/) • [🐛 Report Bug](https://github.com/behradsadeghi/decision-tree-convexity/issues)
+[🌐 Live Demo](https://behradsadeghi.github.io/decision-tree-convexity/) • [🐛 Report Bug](https://github.com/behradsadeghi/decision-tree-convexity/issues) • [💡 Request Feature](https://github.com/behradsadeghi/decision-tree-convexity/issues)
 
 </div>
