@@ -56,6 +56,10 @@
             align-items: center;
             gap: 10px;
         }
+        .control-group.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
         .control-group label {
             font-weight: bold;
             color: #333;
@@ -132,6 +136,28 @@
             color: white;
             box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+        .mode-tab {
+            padding: 15px 40px;
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .mode-tab.active {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border-color: #11998e;
+            box-shadow: 0 5px 20px rgba(17, 153, 142, 0.4);
+        }
         .explanation {
             background: #fff3cd;
             border-left: 4px solid #ffc107;
@@ -139,12 +165,38 @@
             margin: 15px 0;
             border-radius: 8px;
         }
+        .constraint-info {
+            background: #d1ecf1;
+            border-left: 4px solid #0c5460;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            color: #0c5460;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div style="position: relative; min-height: 40px;">
+            <a href="https://github.com/behradsadeghi/decision-tree-convexity" 
+               target="_blank" 
+               style="position: absolute; top: -10px; right: 0; display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; background: #24292e; color: white; text-decoration: none; border-radius: 5px; font-size: 0.75em; font-weight: 600; transition: all 0.3s; box-shadow: 0 2px 6px rgba(0,0,0,0.1);"
+               onmouseover="this.style.background='#333'"
+               onmouseout="this.style.background='#24292e'">
+                <svg height="14" width="14" viewBox="0 0 16 16" fill="white">
+                    <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
+                </svg>
+                <span style="font-size: 0.95em;">GitHub</span>
+            </a>
+        </div>
+        
         <h1>Convexity Magic in Decision Trees</h1>
         <p class="subtitle">Why Gini and Entropy work but Min doesn't?</p>
+
+        <div class="mode-tabs">
+            <button class="mode-tab" id="freeModeTab" onclick="switchMode('free')">🎨 Free Mode</button>
+            <button class="mode-tab active" id="eduModeTab" onclick="switchMode('educational')">🎓 Educational Mode</button>
+        </div>
 
         <div class="tabs">
             <button class="tab active" onclick="changeFunction('gini')">Gini Index</button>
@@ -152,11 +204,19 @@
             <button class="tab" onclick="changeFunction('min')">Min (Flat Line)</button>
         </div>
 
+        <div id="constraintInfo" class="constraint-info">
+            <strong>📐 Educational Mode:</strong> 
+            The constraint <code>p = α × q + (1-α) × r</code> is enforced. 
+            When you change q, r, or α, the parent point p is automatically calculated to maintain this relationship.
+            This simulates a real decision tree split!
+        </div>
+
         <div class="controls">
-            <div class="control-group">
+            <div class="control-group" id="pControl">
                 <label>Parent Point (p)</label>
                 <input type="range" id="pSlider" min="0" max="100" value="50" oninput="updateChart()">
                 <span class="value-display" id="pValue">0.50</span>
+                <small id="pNote" style="color: #999; display: none;">Auto-calculated</small>
             </div>
             <div class="control-group">
                 <label>Left Child (q)</label>
@@ -169,7 +229,7 @@
                 <span class="value-display" id="rValue">0.70</span>
             </div>
             <div class="control-group">
-                <label>Left Weight (alpha)</label>
+                <label>Left Weight (α)</label>
                 <input type="range" id="alphaSlider" min="0" max="100" value="50" oninput="updateChart()">
                 <span class="value-display" id="alphaValue">0.50</span>
             </div>
@@ -218,10 +278,34 @@
                 <li><strong>Red vertical line:</strong> Information Gain (distance from chord to curve)</li>
             </ul>
         </div>
+
+        <div style="text-align: center; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 10px; color: #666;">
+            <p style="margin: 0 0 10px 0;">Made with ❤️ for the ML community</p>
+            <p style="margin: 0;">
+                <a href="https://github.com/behradsadeghi/decision-tree-convexity" 
+                   target="_blank" 
+                   style="color: #667eea; text-decoration: none; font-weight: bold;">
+                    ⭐ Star on GitHub
+                </a>
+                <span style="margin: 0 10px;">•</span>
+                <a href="https://github.com/behradsadeghi/decision-tree-convexity/issues" 
+                   target="_blank" 
+                   style="color: #667eea; text-decoration: none;">
+                    🐛 Report Bug
+                </a>
+                <span style="margin: 0 10px;">•</span>
+                <a href="https://github.com/behradsadeghi" 
+                   target="_blank" 
+                   style="color: #667eea; text-decoration: none;">
+                    👤 @behradsadeghi
+                </a>
+            </p>
+        </div>
     </div>
 
     <script>
         let currentFunction = 'gini';
+        let currentMode = 'educational'; // 'free' or 'educational'
         let chart;
 
         function gini(p) {
@@ -252,13 +336,59 @@
             updateChart();
         }
 
-        function updateChart() {
-            const p = parseFloat(document.getElementById('pSlider').value) / 100;
-            const q = parseFloat(document.getElementById('qSlider').value) / 100;
-            const r = parseFloat(document.getElementById('rSlider').value) / 100;
-            const alpha = parseFloat(document.getElementById('alphaSlider').value) / 100;
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // Update mode tabs
+            document.getElementById('freeModeTab').classList.toggle('active', mode === 'free');
+            document.getElementById('eduModeTab').classList.toggle('active', mode === 'educational');
+            
+            // Update UI
+            const pControl = document.getElementById('pControl');
+            const pSlider = document.getElementById('pSlider');
+            const pNote = document.getElementById('pNote');
+            const constraintInfo = document.getElementById('constraintInfo');
+            
+            if (mode === 'educational') {
+                pControl.classList.add('disabled');
+                pSlider.disabled = true;
+                pNote.style.display = 'block';
+                constraintInfo.style.display = 'block';
+            } else {
+                pControl.classList.remove('disabled');
+                pSlider.disabled = false;
+                pNote.style.display = 'none';
+                constraintInfo.style.display = 'none';
+            }
+            
+            updateChart();
+        }
 
-            document.getElementById('pValue').textContent = p.toFixed(2);
+        function updateChart() {
+            let p, q, r, alpha;
+            
+            if (currentMode === 'educational') {
+                // Educational mode: p is calculated from q, r, alpha
+                q = parseFloat(document.getElementById('qSlider').value) / 100;
+                r = parseFloat(document.getElementById('rSlider').value) / 100;
+                alpha = parseFloat(document.getElementById('alphaSlider').value) / 100;
+                
+                // Calculate p using the constraint: p = α × q + (1-α) × r
+                p = alpha * q + (1 - alpha) * r;
+                
+                // Update p slider and display
+                document.getElementById('pSlider').value = Math.round(p * 100);
+                document.getElementById('pValue').textContent = p.toFixed(2);
+            } else {
+                // Free mode: all values are independent
+                p = parseFloat(document.getElementById('pSlider').value) / 100;
+                q = parseFloat(document.getElementById('qSlider').value) / 100;
+                r = parseFloat(document.getElementById('rSlider').value) / 100;
+                alpha = parseFloat(document.getElementById('alphaSlider').value) / 100;
+                
+                document.getElementById('pValue').textContent = p.toFixed(2);
+            }
+
             document.getElementById('qValue').textContent = q.toFixed(2);
             document.getElementById('rValue').textContent = r.toFixed(2);
             document.getElementById('alphaValue').textContent = alpha.toFixed(2);
@@ -294,7 +424,7 @@
             document.getElementById('coordAvg').textContent = `(${weighted_avg_x.toFixed(4)}, ${weighted_avg_y.toFixed(4)})`;
 
             // Update explanation
-            updateExplanation(gain);
+            updateExplanation(gain, weighted_avg_x, p);
 
             // Update chart
             if (chart) {
@@ -410,22 +540,40 @@
             });
         }
 
-        function updateExplanation(gain) {
+        function updateExplanation(gain, weighted_avg_x, p) {
             let text = '';
+            const isAligned = Math.abs(weighted_avg_x - p) < 0.01;
+            
             if (currentFunction === 'gini') {
-                text = `<strong>Gini Index (Concave):</strong> Due to the curve's concavity, the weighted average point (orange triangle) lies on the yellow chord, but the blue curve is ABOVE it. This vertical distance (red line) = Information Gain = ${gain.toFixed(4)}<br><br>
-                Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+                text = `<strong>Gini Index (Concave):</strong> Due to the curve's concavity, the weighted average point (orange triangle) lies on the yellow chord, but the blue curve is ABOVE it. This vertical distance (red line) = Information Gain = ${gain.toFixed(4)}<br><br>`;
+                if (currentMode === 'educational') {
+                    text += `<strong>Educational Mode:</strong> The orange triangle is directly below the red parent point because we enforce p = α×q + (1-α)×r. This shows a realistic decision tree split!<br><br>`;
+                    text += `Formula: Gain = y_parent - y_weighted_avg`;
+                } else {
+                    text += `Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+                }
             } else if (currentFunction === 'entropy') {
-                text = `<strong>Entropy (Concave):</strong> Similar to Gini, the orange point is on the yellow chord but the blue curve is above. Vertical distance = Gain = ${gain.toFixed(4)}<br><br>
-                Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+                text = `<strong>Entropy (Concave):</strong> Similar to Gini, the orange point is on the yellow chord but the blue curve is above. Vertical distance = Gain = ${gain.toFixed(4)}<br><br>`;
+                if (currentMode === 'educational') {
+                    text += `<strong>Educational Mode:</strong> Notice how the parent (red) is always at x = ${p.toFixed(4)}, which equals α×q + (1-α)×r. This is how real splits work!<br><br>`;
+                    text += `Formula: Gain = y_parent - y_weighted_avg`;
+                } else {
+                    text += `Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+                }
             } else {
-                text = `<strong>Min (Piecewise Linear):</strong> Since Min is made of straight lines, the orange point is on the yellow chord AND the blue curve is EXACTLY at the same place. Distance = zero → No Gain! ${gain.toFixed(4)}<br><br>
-                The yellow chord and blue curve coincide!`;
+                text = `<strong>Min (Piecewise Linear):</strong> Since Min is made of straight lines, the orange point is on the yellow chord AND the blue curve is EXACTLY at the same place. Distance = zero → No Gain! ${gain.toFixed(4)}<br><br>`;
+                if (currentMode === 'educational') {
+                    text += `<strong>Educational Mode:</strong> Even with the realistic constraint enforced, Min gives NO information gain. This is why we don't use it in decision trees!<br><br>`;
+                    text += `Formula: Gain = y_parent - y_weighted_avg`;
+                } else {
+                    text += `Formula: Gain = y_parent - y_weighted_avg = height of curve at x_avg - height of chord at x_avg`;
+                }
             }
             document.getElementById('explanationText').innerHTML = text;
         }
 
-        // Initialize
+        // Initialize in educational mode
+        switchMode('educational');
         updateChart();
     </script>
 </body>
